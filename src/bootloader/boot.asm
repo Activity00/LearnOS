@@ -1,104 +1,54 @@
-org 0x7c00 ; program entry
+org	0x7c00
 
-BaseOfStack equ 0x7c00
+BaseOfStack	equ	0x7c00
 
-; init registers
-mov     ax, cs
-mov     ds, ax
-mov     es, ax
-mov     ss, ax
-mov     sp, BaseOfStack
+Label_Start:
 
-; clear screen
-; AH = 06h roll pages
-; AL = page num (0 to clear screen)
-; BH = color attributes
-; CL = left row, CH = left column
-; DL = right row, DH = right column
-mov     ax, 0600h
-mov     bx, 0700h
-mov     cx, 0
-mov     dx, 184Fh
-int     10h
+	mov	ax,	cs
+	mov	ds,	ax
+	mov	es,	ax
+	mov	ss,	ax
+	mov	sp,	BaseOfStack
 
-; set focus
-; AH = 02h set focus
-; DL = row
-; DH = column
-; BH = page num
-mov     ax, 0200h
-mov     bx, 0000h
-mov     dx, 0000h
-int     10h
+;=======	clear screen
 
-; display boot string (int 10h)
-; AH = 13h display a string
-; AL = 01h display mode
-; CX = StringLen
-; DH = row, DL = column
-; ES:BP = String adress
-; BH = page num
-; BL = text attributes
+	mov	ax,	0600h
+	mov	bx,	0700h
+	mov	cx,	0
+	mov	dx,	0184fh
+	int	10h
 
-; Print a string on screen
-; Parms:
-; Stack: StringAddress, StringLength, ColRow
-; Return:
-; No return
-Func_PrintString:
+;=======	set focus
 
-; construct stack frame
-push    bp
-mov     bp, sp
+	mov	ax,	0200h
+	mov	bx,	0000h
+	mov	dx,	0000h
+	int	10h
 
-; StringAddress     = [bp + 4]
-; StringLength      = [bp + 6]
-; ColRow            = [bp + 8]
+;=======	display on screen : Start Booting......
 
-; protect registers
-push    ax
-push    bx
-push    cx
+	mov	ax,	1301h
+	mov	bx,	000fh
+	mov	dx,	0000h
+	mov	cx,	10
+	push	ax
+	mov	ax,	ds
+	mov	es,	ax
+	pop	ax
+	mov	bp,	StartBootMessage
+	int	10h
 
-; protect BP
-push bp
+;=======	reset floppy
 
-; print string
-mov     ax, 1301h
-mov     bx, 000fh
-mov     cx, [bp + 6]
-mov     dx, [bp + 8]
-mov     bp, [bp + 4]
-int     10h
+	xor	ah,	ah
+	xor	dl,	dl
+	int	13h
 
-; recover bp
-pop bp
+	jmp	$
 
-; recover registers
-pop     cx
-pop     bx
-pop     ax
+StartBootMessage:	db	"Start Boot"
 
-; close stack frame
-mov     sp, bp
-pop     bp
-; return
-ret     6h
+;=======	fill zero until whole sector
 
-; print boot message
-push    0000h
-push    16
-push    StartBootMessage
-call    Func_PrintString
-
-; loop wait
-jmp $
-
-; message string
-StartBootMessage:   db  "Start Booting..."
-
-; padding zero and set flag
-times   510 - ($ - $$) db 0
-dw      0xaa55
-
-
+	times	510 - ($ - $$)	db	0
+	dw	0xaa55
