@@ -7,5 +7,8 @@ docker pull activity00/osenv:latest
 运行：
 如果是linux系统宿主机执行 xhost + 允许容器共享显示
 ```
-docker run -it --net=host -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE activity00/osenv:latest bash 
+docker run -it --net=host -v /tmp/.X11-unix:/tmp/.X11-unix -v $(pwd):/LearnOS -e DISPLAY=unix$DISPLAY -e GDK_SCALE -e GDK_DPI_SCALE activity00/osenv:latest bash 
 ```
+
+cd LearnOS && bochs -f bachsrc
+enter c to continue
