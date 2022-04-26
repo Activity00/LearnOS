@@ -1,5 +1,11 @@
 # LearnOS
-## 虚拟环境
+## 环境
+### MacOS
+brew install bochs
+
+bochs -f bachsrc
+
+### 基于ubuntu
 基于ubuntu18.04 包括bochs2.6.9 以及nasm、dd等基本命令
 ```
 docker pull activity00/osenv:latest
