@@ -4,5 +4,7 @@ build/boot.bin : src/bootloader/boot.asm
 build/loader.bin: src/bootloader/loader.asm
 	nasm src/bootloader/loader.asm -o build/loader.bin
 
+all: boot.bin loader.bin
+
 clean:
 	rm build/*.bin

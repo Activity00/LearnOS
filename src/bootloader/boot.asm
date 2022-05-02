@@ -99,36 +99,6 @@ Label_Start:
 	xor	dl,	dl
 	int	13h
 
-	jmp	$
-
-;======= read one sector from floppy 软盘读取功能
-; 介绍: AX=待读取磁盘起始扇区号  CL: 读入的扇区数量  ES:BX => 目标缓冲区起始地址
-
-Func_ReadOneSector:
-    push bp
-    mov bp, sp
-    sub esp, 2
-    mov byte[bp - 2], cl
-    push bx
-    mov bl, [BPB_SecPerTrk]
-    div bl
-    inc ah
-    mov cl, ah               ; CL=扇区号1~63(bit 0~5), 磁道号的高2位（bit 6~7只对硬盘有效）
-    mov dh, al               ; DH=磁头号
-    shr al, 1
-    mov ch, al               ; CH=磁道号(柱面号)的低八位
-    and dh, 1
-    pop bx                   ; ES:BX=>数据缓冲区
-    mov dl, [BS_DrvNum]      ; DL=驱动器号
-Label_Go_On_Reading:
-    mov ah, 2                ; AH=02H int13h 软盘扇区读取
-    mov al, byte [bp - 2]    ; AL=读入的扇区数，必须为非0
-    int 13h
-    jc Label_Go_On_Reading
-    add esp, 2
-    pop bp
-    ret
-
 ;======= search loader.bin
     mov word [SectorNo], SectorNumOfRootDirStart
 Label_Search_In_Root_Dir_Begin:
@@ -188,6 +158,74 @@ Label_No_LoaderBin:
     int 10h
     jmp $
 
+;======= found loader.bin name in root dir struct
+
+Label_FileName_Found:
+    mov ax, RootDirSectors
+    and di, 0ffe0h
+    add di, 01ah
+    mov cx, word [es:di]
+    push cx
+    add cx, ax
+    add cx, SectorBalance
+    mov ax, BaseOfLoader
+    mov es, ax
+    mov bx, OffsetOfLoader
+    mov ax, cx
+
+Label_Go_On_Loading_File:
+    push ax
+    push bx
+    mov ah, 0eh
+    mov al, '.'
+    mov bl, 0fh
+    int 10h
+    pop bx
+    pop ax
+
+    mov cl, 1
+    call Func_ReadOneSector
+    pop ax
+    call Func_GetFATEntry
+    cmp ax, 0fffh
+    jz Label_File_Loaded
+    push ax
+    mov dx, RootDirSectors
+    add ax, dx
+    add ax, SectorBalance
+    add bx, [BPB_BytesPerSec]
+    jmp Label_Go_On_Loading_File
+
+Label_File_Loaded:
+    jmp BaseOfLoader:OffsetOfLoader
+
+;======= read one sector from floppy 软盘读取功能
+; 介绍: AX=待读取磁盘起始扇区号  CL: 读入的扇区数量  ES:BX => 目标缓冲区起始地址
+
+Func_ReadOneSector:
+    push bp
+    mov bp, sp
+    sub esp, 2
+    mov byte[bp - 2], cl
+    push bx
+    mov bl, [BPB_SecPerTrk]
+    div bl
+    inc ah
+    mov cl, ah               ; CL=扇区号1~63(bit 0~5), 磁道号的高2位（bit 6~7只对硬盘有效）
+    mov dh, al               ; DH=磁头号
+    shr al, 1
+    mov ch, al               ; CH=磁道号(柱面号)的低八位
+    and dh, 1
+    pop bx                   ; ES:BX=>数据缓冲区
+    mov dl, [BS_DrvNum]      ; DL=驱动器号
+Label_Go_On_Reading:
+    mov ah, 2                ; AH=02H int13h 软盘扇区读取
+    mov al, byte [bp - 2]    ; AL=读入的扇区数，必须为非0
+    int 13h
+    jc Label_Go_On_Reading
+    add esp, 2
+    pop bp
+    ret
 
 ;====== get FAT Entry
 
@@ -230,47 +268,6 @@ Label_Even_2:
     pop es
     ret
 
-;======= found loader.bin name in root dir struct
-
-Label_FileName_Found:
-    mov ax, RootDirSectors
-    and di, 0ffe0h
-    add di, 01ah
-    mov cx, word [es:di]
-    push cx
-    add cx, ax
-    add cx, SectorBalance
-    mov ax, BaseOfLoader
-    mov es, ax
-    mov bx, OffsetOfLoader
-    mov ax, cx
-
-Label_Go_On_Loading_File:
-    push ax
-    push bx
-    mov ah, 0eh
-    mov al, '.'
-    mov bl, 0fh
-    int 10h
-    pop bx
-    pop ax
-
-    mov cl, 1
-    call Func_ReadOneSector
-    pop ax
-    call Func_GetFATEntry
-    cmp ax, 0fffh
-    jz Label_File_Loaded
-    push ax
-    mov dx, RootDirSectors
-    add ax, dx
-    add ax, SectorBalance
-    add bx, [BPB_BytesPerSec]
-    jmp Label_Go_On_Loading_File
-
-Label_File_Loaded:
-    jmp BaseOfLoader:OffsetOfLoader
-
 ;======= tmp variable
 RootDirSizeForLoop dw RootDirSectors
 SectorNo dw 0
@@ -278,10 +275,6 @@ Odd db 0
 ;====== display messages
 NoLoaderMessage: db "ERROR:NO LOADER FOUND"
 LoaderFileName: db "LOADER BIN", 0
-
-
-
-
 StartBootMessage:	db	"Start Boot"
 ;=======	fill zero until whole sector
 
