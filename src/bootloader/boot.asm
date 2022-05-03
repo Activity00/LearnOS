@@ -274,7 +274,7 @@ SectorNo dw 0
 Odd db 0
 ;====== display messages
 NoLoaderMessage: db "ERROR:NO LOADER FOUND"
-LoaderFileName: db "LOADER BIN", 0
+LoaderFileName: db "LOADER  BIN", 0 ; 少个空格会找不到loader
 StartBootMessage:	db	"Start Boot"
 ;=======	fill zero until whole sector
 
