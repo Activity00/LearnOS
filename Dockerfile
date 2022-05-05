@@ -1,8 +1,6 @@
-#TODO
-FROM Busybox:latest
+FROM busybox:latest
 
-WORKDIR /opt/
+WORKDIR /
 
-COPY . .
-RUN  mkdir /opt/media/ && mount -t vfat -o loop /opt/build/boot.img /opt/media/ && cp /opt/build/loader.bin /opt/media/ && sync && umount /opt/media/
-
+COPY cploader2image.sh .
+RUN  ["./cploader2image.sh"]
