@@ -94,19 +94,19 @@ Label_Search_In_Root_Dir_Begin:
     mov si, LoaderFileName
     mov di, 8000h
     cld
-    mov dx, 10h
+    mov dx, 10h ; 记录每个扇区可容纳目录个数 = 512B/32B = 16 = 0x10
 
 Label_Search_For_LoaderBin:
     cmp dx, 0
     jz Label_Goto_Next_Sector_In_Root_Dir
     dec dx
-    mov cx, 11
+    mov cx, 11  ; bin文件名字长度/目录项名字长度
 
 Label_Cmp_FileName:
     cmp cx, 0
     jz Label_FileName_Found
     dec cx
-    lodsb
+    lodsb                   ; SI指向的存储单元读入累加器,其中LODSB是读入AL,LODSW是AX中,然后SI自动增加或减小1或2位.当方向标志位DF=0时，则SI自动增加；DF=1时，SI自动减小
     cmp al, byte [es:di]
     jz Label_Go_On
     jmp Label_Different
@@ -142,18 +142,19 @@ Label_No_LoaderBin:
 
 Label_FileName_Found:
     mov ax, RootDirSectors
-    and di, 0ffe0h
-    add di, 01ah
-    mov cx, word [es:di]
+    and di, 0ffe0h             ; di的低5位清零
+    add di, 01ah               ; 01ah 起始簇号偏移
+    mov cx, word [es:di]       ; 保存下起始簇号
     push cx
     add cx, ax
     add cx, SectorBalance
     mov ax, BaseOfLoader
-    mov es, ax
+    mov es, ax                 ; 指定loader.bin的内存数据地址 es:bx
     mov bx, OffsetOfLoader
     mov ax, cx
 
 Label_Go_On_Loading_File:
+    ; 显示.看loader需要几个扇区读取
     push ax
     push bx
     mov ah, 0eh
@@ -167,7 +168,7 @@ Label_Go_On_Loading_File:
     call Func_ReadOneSector
     pop ax
     call Func_GetFATEntry
-    cmp ax, 0fffh
+    cmp ax, 0fffh               ; 0fffh 代表已经读完
     jz Label_File_Loaded
     push ax
     mov dx, RootDirSectors
@@ -181,7 +182,8 @@ Label_File_Loaded:
 
 ;======= read one sector from floppy 软盘读取功能
 ; 介绍: AX=待读取磁盘起始扇区号  CL: 读入的扇区数量  ES:BX => 目标缓冲区起始地址
-
+; 模块传入的磁盘扇区号是LBA(逻辑块寻址)格式的int 13h AH=02h中断服务只能受理CHS(柱面，磁头，扇区)格式转换公式如下:
+; LBA扇区号/每磁道扇区数 = Q......R    柱面号=Q>=1  磁头号=Q  起始扇区号 = R + 1
 Func_ReadOneSector:
     push bp
     mov bp, sp
@@ -208,7 +210,8 @@ Label_Go_On_Reading:
     ret
 
 ;====== get FAT Entry
-
+; FAT12 每个FAT表项占用12bit，即每三个字节存储两个FAT表项、由此看来FAT 表项具有奇偶性，该方法通过根据当前FAT表项索引出下一个FAT表项
+; AH = FAT表项号(输入参数/输入参数)
 Func_GetFATEntry:
     push es
     push bx
@@ -216,7 +219,7 @@ Func_GetFATEntry:
     mov ax, 00
     mov es, ax
     pop ax
-    mov byte [Odd], 0
+    mov byte [Odd], 0   ; 由于FAT12 占12bit 1.5B 所以将FAT表乘以3除以2(扩大1.5倍) 来判断余数的奇偶性保存到Odd,再将结果除以每扇区的字节数商为FAT表象偏移扇区号，余数为表象再扇区中偏移
     mov bx, 3
     mul bx
     mov bx, 2
