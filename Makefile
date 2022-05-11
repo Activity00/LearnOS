@@ -10,7 +10,7 @@ upload:
 	rsync -zvrtopg --progress --delete . -e ssh wmh@192.168.1.8:/home/wmh/LearnOS
 
 download:
-	rsync -zvrtopg --progress -e 'ssh -p 22' wmh@192.168.1.8:/home/wmh/LearnOS/build ./build/
+	rsync -zvrtopg --progress -e 'ssh -p 22' wmh@192.168.1.8:/home/wmh/LearnOS/build/ ./build/
 
 clean:
 	rm build/*.bin
