@@ -6,6 +6,9 @@ build/boot.bin : src/bootloader/boot.asm
 build/loader.bin: src/bootloader/loader.asm
 	nasm src/bootloader/loader.asm -o build/loader.bin
 
+copy_to_img:
+	dd if=build/boot.bin of=build/boot.img bs=512 count=1 conv=notrunc
+
 image:
 	mkdir media/ && mount -t vfat -o loop build/boot.img media/ && cp build/*.bin media/ && cp src/kernel/*.bin media/ && sync && umount media/ && rm -rf media/
 
