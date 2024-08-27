@@ -10,7 +10,6 @@ SectorNumOfRootDirStart	equ	19 ; 根目录其实扇区号
 SectorNumOfFAT1Start	equ	1   ; FAT1表起始扇区号
 SectorBalance	equ	17  ; 平衡文件、目录其实扇区号与数据区其实簇号差值
 
-; FAT12文件系统 名称            偏移  长度     内容                     描述
 jmp	short Label_Start        ; 0   3       跳转指定                  因为下面描述信息不是执行程序
 nop
 %include "src/bootloader/fat12.inc"
