@@ -10,7 +10,7 @@ dd_to_img:
 	dd if=build/boot.bin of=build/boot.img bs=512 count=1 conv=notrunc
 
 cp_to_img:
-	mkdir media/ && mount build/boot.img media/ -t vfat -o loop  && cp build/*.bin media/ && cp src/kernel/*.bin media/ && sync && umount media/ && rm -rf media/
+	mkdir media/ && sudo mount build/boot.img media/ -t vfat -o loop  && cp build/*.bin media/ && cp src/kernel/*.bin media/ && sync && sudo umount media/ && rm -rf media/
 
 upload:
 	rsync -zvrtopg --progress --delete . -e ssh wmh@192.168.1.8:/home/wmh/LearnOS
