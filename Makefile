@@ -1,13 +1,8 @@
-all: build/boot.bin build/loader.bin dd_to_img cp_to_img build/loadea.bin
+all: bootloader dd_to_img cp_to_img
 
-build/boot.bin : src/bootloader/boot.asm
+bootloader : src/bootloader/boot.asm src/bootloader/loader.asm
 	nasm src/bootloader/boot.asm -o build/boot.bin
-
-build/loader.bin: src/bootloader/loader.asm
 	nasm src/bootloader/loader.asm -o build/loader.bin
-
-build/loadea.bin: src/bootloader/loadea.asm
-	nasm src/bootloader/loadea.asm -o build/loadea.bin
 
 dd_to_img:
 	dd if=build/boot.bin of=build/boot.img bs=512 count=1 conv=notrunc
